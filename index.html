@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Viewer</title>
+  
+   <style>
+    .home-ui {
+        text-align: center;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .welcome-box {
+        margin-bottom: 20px;
+    }
+
+    .welcome-box h2 {
+        font-size: 2em;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .welcome-box p {
+        font-size: 1.2em;
+        color: #666;
+    }
+
+    .input-box {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .input-box input {
+        padding: 10px;
+        font-size: 1.2em;
+        width: 200px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-box button {
+        padding: 10px 20px;
+        font-size: 1.2em;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .input-box button:hover {
+        background-color: #0056b3;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 0;
+        background-color: #f4f4f9;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .box {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .box h3 {
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        color: #333;
+    }
+
+    .attendance-table, .subject-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .attendance-table th, .attendance-table td, .subject-table th, .subject-table td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+        font-size: 12px;
+    }
+
+    .attendance-table th, .subject-table th {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .attendance-table td.present {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .attendance-table td.absent {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .attendance-table td.nosessions {
+        background-color: #9e9e9e;
+        color: white;
+    }
+
+    .attendance-table td.circle {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 10px;
+        font-size: 7px;
+    }
+
+    .attendance-table td.circle.present {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .attendance-table td.circle.absent {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .attendance-table td.circle.nosessions {
+        background-color: #9e9e9e;
+        color: white;
+    }
+
+    .total-percentage {
+        font-weight: bold;
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #007bff;
+    }
+
+    .box-header {
+        font-size: 1.3em;
+        color: #333;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+
+    .attendance-table td {
+        text-align: center;
+    }
+
+    @media screen and (min-width: 768px) {
+        .attendance-table .circle {
+            display: inline-block;
+            margin: 0 auto;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .attendance-table td.circle {
+            margin-right: 5px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .attendance-table td, .subject-table td {
+            font-size: 10px;
+        }
+
+        .attendance-table th, .subject-table th {
+            font-size: 12px;
+        }
+
+        .attendance-table td.circle {
+            width: 8px;
+            height: 8px;
+            font-size: 7px;
+            line-height: 8px;
+        }
+
+        .box {
+            padding: 15px;
+        }
+    }
+
+</style>
+
+</head>
+<body>
+    <div class="home-ui">
+    <div class="welcome-box">
+        <h2>Attendance Viewer</h2>
+        <p>Enter your 12-digit roll number</p>
+    </div>
+    <div class="input-box">
+        <input type="text" id="rollno" placeholder="Enter Roll Number" maxlength="12">
+    </div>
+</div>
+
+    <div id="attendance-result"></div>
+
+<script>
+    async function fetchAttendance() {
+        const rollno = document.getElementById('rollno').value;
+        if (rollno.length !== 12) {
+            alert("Please enter a valid 12-digit roll number.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://no.89determined.workers.dev/?rollno=${rollno}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            const data = await response.json();
+            displayAttendance(data);
+        } catch (error) {
+            document.getElementById('attendance-result').innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    function checkRollno() {
+        const rollno = document.getElementById('rollno').value;
+        if (rollno.length === 12) {
+            fetchAttendance();
+        }
+    }
+
+    function displayAttendance(data) {
+        const resultDiv = document.getElementById('attendance-result');
+        resultDiv.innerHTML = '';
+
+        const totalPercentage = data.overallattperformance.totalpercentage;
+        const totalPercentageHTML = `<div class="total-percentage">Total Attendance Percentage: ${totalPercentage}%</div>`;
+
+        let dayHTML = `<div class="box">
+            <div class="box-header">Attendance Per Day</div>
+            <table class="attendance-table">
+                <thead>
+                    <tr><th>Date</th><th>Sessions</th></tr>
+                </thead>
+                <tbody>`;
+
+        data.attandance.dayobjects.forEach(day => {
+            let sessionHTML = '';
+            Object.keys(day.sessions).forEach(session => {
+                const status = getSessionStatus(day.sessions[session]);
+                sessionHTML += `<td class="circle ${status}">${getSessionIcon(day.sessions[session])}</td>`;
+            });
+            dayHTML += `<tr><td>${day.date}</td>${sessionHTML}</tr>`;
+        });
+
+        dayHTML += `</tbody></table></div>`;
+
+        let subjectHTML = `<div class="box">
+            <div class="box-header">Subject-wise Attendance</div>
+            <table class="subject-table">
+                <thead>
+                    <tr><th>Subject</th><th>Attendance</th></tr>
+                </thead>
+                <tbody>`;
+
+        data.overallattperformance.overall.forEach(subject => {
+            let percentage = subject.percentage !== '--' ? parseFloat(subject.percentage) : 0;
+            let practical = subject.practical !== '--' ? parseFloat(subject.practical) : 0;
+
+            const totalAttendance = Math.min(percentage + practical, 100);
+
+            const attendance = `${percentage} ${practical}`;
+
+            subjectHTML += `<tr>
+                <td>${subject.subjectname}</td>
+                <td>${totalAttendance}</td>
+            </tr>`;
+        });
+
+        subjectHTML += `</tbody></table></div>`;
+
+        resultDiv.innerHTML = totalPercentageHTML + dayHTML + subjectHTML;
+    }
+
+    function getSessionStatus(sessionValue) {
+        if (sessionValue === "1") return 'present';
+        if (sessionValue === "0") return 'absent';
+        return 'nosessions';
+    }
+
+    function getSessionIcon(sessionValue) {
+        if (sessionValue === "1") return '✔';
+        if (sessionValue === "0") return '✘';
+        return '○';
+    }
+
+    document.getElementById('rollno').addEventListener('input', checkRollno);
+</script>
+
+</body>
+</html>
